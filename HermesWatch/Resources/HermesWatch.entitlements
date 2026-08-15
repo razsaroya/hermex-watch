@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Shared with the complication extension so HermesWatchStatusBridge can
+	     hand the glanceable snapshot across process boundaries. The same group
+	     must be added to the HermesWatchWidget extension's entitlements. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>$(APP_GROUP_IDENTIFIER)</string>
+	</array>
+
+	<!-- Keychain access group for the watch app + its widget extension. This
+	     does NOT bridge to the iPhone: watchOS and iOS are separate devices
+	     with separate keychains, so WATCHOS_ARCHITECTURE_SPEC §4.1's
+	     "kSecAttrAccessGroup / iCloud Keychain" sharing does not transfer
+	     credentials from phone to watch. WCSession is the real transport
+	     (see HermesWatch/Connectivity/WatchConnectivityManager.swift). -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)$(APP_BUNDLE_IDENTIFIER)</string>
+	</array>
+</dict>
+</plist>
