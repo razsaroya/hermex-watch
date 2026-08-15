@@ -80,10 +80,58 @@ HermesWatch/
 │   ├── Approvals/        WatchApprovalCenter, ApprovalPromptView
 │   ├── QuickSessions/    QuickSessionsView(Model)
 │   ├── Tasks/            WatchTasksView(Model)  — cron jobs
-│   └── VoiceChat/        WatchVoiceChatView(Model), VoiceOrbView, StreamingCaptionView
+│   ├── VoiceChat/        WatchVoiceChatView(Model), VoiceOrbView, StreamingCaptionView
+│   └── VoiceNote/        WatchVoiceNoteView(Model), WatchVoiceNoteRecorder,
+│                         WatchVoiceNoteGesture
 ├── Resources/            Info.plist, HermesWatch.entitlements
 └── Support/              WatchServerContext, WatchCredentialStore, WatchStatusPublisher
 ```
+
+---
+
+## 2.1 Two voice surfaces, deliberately
+
+`VoiceChat/` and `VoiceNote/` are separate screens with separate state machines,
+not two modes of one screen.
+
+| | **Voice chat** (`WatchVoiceChatView`) | **Voice note** (`WatchVoiceNoteView`) |
+| --- | --- | --- |
+| Interaction | Live back-and-forth, hands-free | "Leave a message", review before sending |
+| Audio format | 16 kHz mono WAV, discarded after STT | 22.05 kHz mono AAC `.m4a`, **kept** as a chat attachment |
+| Recorder | `WatchAudioEngine` (`AVAudioEngine` tap) | `WatchVoiceNoteRecorder` (`AVAudioRecorder`) |
+| Cap | 30 s | 60 s |
+| After sending | Subscribes to SSE, speaks the reply via TTS | Nothing — the run continues server-side |
+
+The voice-note pipeline mirrors iOS `ChatViewModel.sendVoiceNote` exactly:
+
+```
+record (≤60 s) → AAC .m4a named voice-note-<8hex>.m4a
+    → POST /api/transcribe        → transcript
+    → user reviews it on-wrist    → Send / Re-record / Discard
+    → POST /api/upload            → attachment path
+    → POST /api/chat/start          message = the BARE transcript,
+                                    attachments = [the clip]
+```
+
+Two details are load-bearing and match the phone for a reason:
+
+- **The message text is the bare transcript**, with no `[Attached files: …]`
+  suffix. That suffix is the agent's only signal about a non-image attachment,
+  so adding it makes the agent try to "inspect" the clip instead of answering
+  what was said (#330). The clip rides along purely so the inline player renders
+  it.
+- **The filename shape `voice-note-<8hex>.m4a`** is what makes the iOS/web
+  inline player treat the attachment as a playable voice note rather than a
+  generic file. `VoiceNoteFilename` therefore moved from
+  `HermesMobile/Features/Chat/ComposerVoiceNoteRecorder.swift` into
+  `HermesMobile/Models/UploadResponse.swift`, so both targets compile one copy
+  of the convention (`Features/` is iOS-only; `Models/` is in the shared
+  manifest above). No new file, so no pbxproj change.
+
+Entry points: the root list ("Voice Note"), `QuickSessionsView` ("New voice
+note", plus a leading swipe action per session), and a toolbar link inside
+`WatchVoiceChatView` — the latter gated on the session existing and no turn
+being in flight.
 
 ---
 
@@ -204,8 +252,10 @@ Mac:
 - **Xcode target declaration** (§4 above).
 - **Any build or test run.** No XCTest target for the watch exists yet; the
   pure-logic pieces worth covering first are
-  `WatchSpeechPlayer.splitCompleteSentences` and the WAV header writer in
-  `WatchAudioEngine`.
+  `WatchSpeechPlayer.splitCompleteSentences`, the WAV header writer in
+  `WatchAudioEngine`, `WatchVoiceNoteGesture.isHold(pressDuration:)` and
+  `WatchVoiceNoteRecorder.smoothedLevel(previous:dBFS:)` (make the latter
+  non-private first — it is deliberately pure so it can be).
 - **Push-notification approvals.** Spec §3.2 mentions a push path; this slice
   implements the SSE path (`GET /api/approval/stream`) only.
 - **App icon / asset catalog** for the watch target.

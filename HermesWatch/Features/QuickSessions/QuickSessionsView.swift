@@ -4,6 +4,11 @@ import SwiftUI
 /// a way to start a brand new voice chat.
 struct QuickSessionsView: View {
     @State private var model = QuickSessionsViewModel()
+    /// Selection for the "send a voice note into an existing session" swipe
+    /// action below, driving `.navigationDestination(item:)`. See
+    /// `VoiceNoteTarget`'s doc comment for why this is its own tiny wrapper
+    /// rather than `SessionSummary` itself.
+    @State private var voiceNoteTarget: VoiceNoteTarget?
 
     init() {}
 
@@ -14,6 +19,13 @@ struct QuickSessionsView: View {
                     WatchVoiceChatView(sessionID: nil, workspace: nil)
                 } label: {
                     Label("New voice chat", systemImage: "plus.bubble")
+                        .font(.footnote)
+                }
+
+                NavigationLink {
+                    WatchVoiceNoteView(sessionID: nil, workspace: nil)
+                } label: {
+                    Label("New voice note", systemImage: "mic.badge.plus")
                         .font(.footnote)
                 }
             }
@@ -28,6 +40,9 @@ struct QuickSessionsView: View {
         }
         .refreshable {
             await model.refresh()
+        }
+        .navigationDestination(item: $voiceNoteTarget) { target in
+            WatchVoiceNoteView(sessionID: target.id, workspace: target.workspace)
         }
     }
 
@@ -54,8 +69,53 @@ struct QuickSessionsView: View {
                 } label: {
                     QuickSessionRow(summary: summary)
                 }
+                // Leading, not trailing: trailing is the conventional slot for
+                // a destructive/primary action (delete, archive) that this
+                // list doesn't have yet but plausibly will; leading is the
+                // natural home for a non-destructive "compose into this"
+                // action, the same split Mail uses (leading: flag/reply,
+                // trailing: delete/archive).
+                .swipeActions(edge: .leading) {
+                    if let sessionID = summary.sessionId, !sessionID.isEmpty {
+                        Button {
+                            voiceNoteTarget = VoiceNoteTarget(sessionID: sessionID, workspace: summary.workspace)
+                        } label: {
+                            Label("Voice Note", systemImage: "mic.fill")
+                        }
+                        .tint(.accentColor)
+                    }
+                }
             }
         }
+    }
+}
+
+/// Minimal, value-stable identity for "which session to open a voice note
+/// against" — the `navigationDestination(item:)` selection the swipe action
+/// above sets.
+///
+/// `SessionSummary` (HermesMobile/Models/Session.swift) already conforms to
+/// `Hashable & Identifiable`, so it could technically be used as the item
+/// directly without this wrapper. It deliberately isn't: `SessionSummary`'s
+/// `Hashable` conformance is synthesized over *all* its stored properties,
+/// including several `.refreshable` above can change on any poll
+/// (`messageCount`, `isStreaming`, `lastMessageAt`, `estimatedCost`, …).
+/// `navigationDestination(item:)` ties the destination's identity to the
+/// item's value; a `@State` selection is a snapshot copy so an in-place list
+/// refresh can't retroactively change *this* selection, but keying that
+/// selection off a struct whose equality is entangled with unrelated,
+/// frequently-changing metadata is still the wrong contract to lean on here
+/// — the destination only ever cares about *which session and workspace*,
+/// nothing else `SessionSummary` carries. A narrow wrapper keyed on exactly
+/// `sessionId` + `workspace` says that directly and stays correct regardless
+/// of what fields `SessionSummary` gains later.
+private struct VoiceNoteTarget: Identifiable, Hashable {
+    let id: String
+    let workspace: String?
+
+    init(sessionID: String, workspace: String?) {
+        self.id = sessionID
+        self.workspace = workspace
     }
 }
 

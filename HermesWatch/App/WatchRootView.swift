@@ -76,6 +76,16 @@ struct WatchRootView: View {
             }
 
             NavigationLink {
+                WatchVoiceNoteView(sessionID: nil, workspace: nil)
+            } label: {
+                // `waveform.badge.mic` (not the plain "waveform" the Voice
+                // row above already uses) so the two rows read as visually
+                // distinct at a glance: live back-and-forth vs. one-shot
+                // message.
+                Label("Voice Note", systemImage: "waveform.badge.mic")
+            }
+
+            NavigationLink {
                 QuickSessionsView()
             } label: {
                 Label("Sessions", systemImage: "bubble.left.and.bubble.right")

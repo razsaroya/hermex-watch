@@ -1,6 +1,6 @@
 # HermesWatch — implementation summary
 
-Delivers `WATCHOS_ARCHITECTURE_SPEC.md` as source. 23 Swift files (~3,800 lines),
+Delivers `WATCHOS_ARCHITECTURE_SPEC.md` as source. 26 Swift files (~5,100 lines),
 plus `Info.plist`, an entitlements file, and `README.md`.
 
 **Read `README.md` first** — it holds the shared-code manifest, the Xcode
@@ -40,7 +40,8 @@ Expect compile errors on the first Mac build anyway. Budget for it.
 | **Connectivity** | `WatchConnectivityManager` | `WCSession` receive side, with an explicit documented wire format. `NSObject` delegate bridge hops every callback to the main actor. |
 | **Audio** | `WatchAudioEngine`, `WatchSpeechPlayer`, `WatchHapticFeedback` | `AVAudioEngine` tap → `AVAudioConverter` → 16 kHz mono WAV for `/api/transcribe`. Sentence-queued MP3 playback for `/api/tts`. Six haptic cues. |
 | **Voice chat** | `WatchVoiceChatViewModel`, `WatchVoiceChatView`, `VoiceOrbView`, `StreamingCaptionView` | The full turn: record → transcribe → create session → chat start → SSE → sentence-wise TTS. Four-state orb, auto-scrolling captions, tool badge. |
-| **Sessions** | `QuickSessionsView(Model)` | 15 most recent sessions, newest first; resume into voice chat. |
+| **Voice note** | `WatchVoiceNoteViewModel`, `WatchVoiceNoteView`, `WatchVoiceNoteRecorder`, `WatchVoiceNoteGesture` | "Leave a message" counterpart to voice chat, mirroring iOS `ChatViewModel.sendVoiceNote`: `AVAudioRecorder` → AAC `.m4a` (≤60 s) → transcribe → **review on-wrist** → upload → chat start with the clip attached. Tap-to-toggle *and* push-to-talk on one control. No SSE, no TTS. See README §2.1. |
+| **Sessions** | `QuickSessionsView(Model)` | 15 most recent sessions, newest first; resume into voice chat, or swipe leading to send a voice note into one. |
 | **Tasks** | `WatchTasksView(Model)` | Cron jobs with run-now / pause / resume. |
 | **Approvals** | `WatchApprovalCenter`, `ApprovalPromptView` | `/api/approval/stream` + an immediate catch-up fetch. All four server choices, Deny separated. |
 | **Complications** | `HermesWatchWidget`, `…Provider`, `…StatusSnapshot` | Four accessory families over an App Group snapshot; deep-links into the app. |

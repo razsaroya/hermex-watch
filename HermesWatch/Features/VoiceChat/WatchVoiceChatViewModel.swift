@@ -67,7 +67,7 @@ final class WatchVoiceChatViewModel {
     var isMicEnabled: Bool = true
 
     private let workspace: String?
-    private var sessionID: String?
+    private(set) var sessionID: String?
 
     private let audio = WatchAudioEngine()
     private let player = WatchSpeechPlayer()
