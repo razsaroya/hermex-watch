@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C03250000000000000B901 /* LiveVoiceAudioEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03250000000000000F901 /* LiveVoiceAudioEngine.swift */; };
+		C03250000000000000B902 /* LiveVoiceSpeechPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03250000000000000F902 /* LiveVoiceSpeechPlayer.swift */; };
+		C03250000000000000B903 /* LiveVoiceChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03250000000000000F903 /* LiveVoiceChatViewModel.swift */; };
+		C03250000000000000B904 /* LiveVoiceChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C03250000000000000F904 /* LiveVoiceChatView.swift */; };
 		05814DEA5DE4690F730B1E15 /* InsightsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 931EC010A2D940B0E42287A4 /* InsightsViewModel.swift */; };
 		26AB000000000000000000B1 /* ProvidersViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26AB000000000000000000F1 /* ProvidersViewModel.swift */; };
 		26AB000000000000000000B2 /* ProvidersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26AB000000000000000000F2 /* ProvidersView.swift */; };
@@ -355,6 +359,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C03250000000000000F901 /* LiveVoiceAudioEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveVoiceAudioEngine.swift; sourceTree = "<group>"; };
+		C03250000000000000F902 /* LiveVoiceSpeechPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveVoiceSpeechPlayer.swift; sourceTree = "<group>"; };
+		C03250000000000000F903 /* LiveVoiceChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveVoiceChatViewModel.swift; sourceTree = "<group>"; };
+		C03250000000000000F904 /* LiveVoiceChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveVoiceChatView.swift; sourceTree = "<group>"; };
 		0485E1E1FFB64A24BB729CD4 /* SlashCommandTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlashCommandTests.swift; sourceTree = "<group>"; };
 		351C0F1600000000000000A1 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Shared.xcconfig; path = Config/Shared.xcconfig; sourceTree = "<group>"; };
 		1A2B3C4D5E6F700000000301 /* ServerAccount.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerAccount.swift; sourceTree = "<group>"; };
@@ -698,6 +706,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		C03250000000000000G900 /* LiveVoice */ = {
+			isa = PBXGroup;
+			children = (
+				C03250000000000000F901 /* LiveVoiceAudioEngine.swift */,
+				C03250000000000000F902 /* LiveVoiceSpeechPlayer.swift */,
+				C03250000000000000F903 /* LiveVoiceChatViewModel.swift */,
+				C03250000000000000F904 /* LiveVoiceChatView.swift */,
+			);
+			path = LiveVoice;
+			sourceTree = "<group>";
+		};
 		1A2B3C4D5E6F700000000030 = {
 			isa = PBXGroup;
 			children = (
@@ -923,6 +942,7 @@
 		1A2B3C4D5E6F7000000000C3 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				C03250000000000000G900 /* LiveVoice */,
 				1A2B3C4D5E6F7000000000C4 /* Onboarding */,
 				C09300000000000000000010 /* Shared */,
 				1A2B3C4D5E6F7000000000C5 /* SessionList */,
@@ -1422,6 +1442,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C03250000000000000B901 /* LiveVoiceAudioEngine.swift in Sources */,
+				C03250000000000000B902 /* LiveVoiceSpeechPlayer.swift in Sources */,
+				C03250000000000000B903 /* LiveVoiceChatViewModel.swift in Sources */,
+				C03250000000000000B904 /* LiveVoiceChatView.swift in Sources */,
 				1A2B3C4D5E6F700000000001 /* HermesMobileApp.swift in Sources */,
 				1A2B3C4D5E6F700000000002 /* ContentView.swift in Sources */,
 				1A2B3C4D5E6F700000000338 /* HermexAppIntents.swift in Sources */,
