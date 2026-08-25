@@ -69,6 +69,26 @@
 		</dict>
 	</array>
 
+	<!-- Mirrors HermesMobile/Resources/Info.plist's exception. A Tailscale
+	     tailnet addresses peers in the CGNAT range 100.64.0.0/10 and Serve is
+	     often left on plain HTTP, so without this every request the watch makes
+	     to such a server is blocked by App Transport Security before it leaves
+	     the device — surfacing as "The resource could not be loaded because the
+	     App Transport Security policy requires the use of a secure connection".
+	     The watch talks to the same servers as the phone, so the two exception
+	     lists must stay identical. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>100.64.0.0/10</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+
 	<!-- NOTE (deliberately absent): WKBackgroundModes.
 	     WATCHOS_ARCHITECTURE_SPEC §5 Phase 2 asks for WKExtendedRuntimeSession
 	     entitlements for "background voice sessions". watchOS only grants

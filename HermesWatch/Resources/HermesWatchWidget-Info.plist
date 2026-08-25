@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>CFBundleDisplayName</key>
+	<string>$(APP_DISPLAY_NAME)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>XPC!</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+
+	<!-- Read by HermesWatchStatusBridge.appGroupIdentifier
+	     (HermesWatch/Complications/HermesWatchStatusSnapshot.swift). The widget
+	     runs out-of-process and reads the snapshot the watch app writes, so this
+	     MUST resolve to the same group as HermesWatch/Resources/Info.plist —
+	     both track APP_GROUP_IDENTIFIER from Config/Shared.xcconfig so the
+	     .branch TestFlight build gets its own group. -->
+	<key>HermesAppGroupIdentifier</key>
+	<string>$(APP_GROUP_IDENTIFIER)</string>
+
+	<!-- Read by HermesWatchStatusBridge.deepLinkScheme to build the
+	     complication's .widgetURL. Must match the CFBundleURLSchemes entry the
+	     watch app registers in HermesWatch/Resources/Info.plist, or the deep
+	     link opens nothing. -->
+	<key>HermesWatchURLScheme</key>
+	<string>hermex-watch$(APP_URL_SCHEME_SUFFIX)</string>
+
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+	</dict>
+</dict>
+</plist>

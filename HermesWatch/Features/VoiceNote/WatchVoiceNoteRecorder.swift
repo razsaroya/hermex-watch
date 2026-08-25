@@ -73,8 +73,14 @@ final class WatchVoiceNoteRecorder {
 
     private var recorder: AVAudioRecorder?
     private var fileURL: URL?
-    private var ticker: Timer?
-    private var capTask: Task<Void, Never>?
+    /// `@ObservationIgnored` is load-bearing, not just an optimization: `deinit`
+    /// is nonisolated and may only touch *stored* properties of a `@MainActor`
+    /// type. Without it the `@Observable` macro rewrites these into computed
+    /// properties, and the cleanup in `deinit` stops compiling. Matches
+    /// `ComposerVoiceNoteRecorder.ticker` on iOS. Neither is UI state worth
+    /// observing anyway — both are cancellation handles.
+    @ObservationIgnored private var ticker: Timer?
+    @ObservationIgnored private var capTask: Task<Void, Never>?
     private var didActivateSession = false
     /// Set the moment the 60s cap fires, so `finish()` can report the known
     /// cap duration instead of reading `AVAudioRecorder.currentTime` — which

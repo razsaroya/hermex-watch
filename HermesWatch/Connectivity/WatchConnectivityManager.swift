@@ -15,20 +15,21 @@ import WatchConnectivity
 ///   "display_name":  String?,         // ServerAccount.displayName, if any
 ///   "headers":       String?,         // [CustomHeader].encodedForStorage() JSON
 ///   "sessions":      Data?,           // JSON-encoded [WatchSessionSnapshot]
+///   "auth_cookies":  [[String: Any]]?,// session cookies scoped to server_url
 ///   "signed_out":    Bool?            // true => the user signed out on the phone
 /// ]
 /// ```
 /// `requestSync()`'s reply payload uses the identical shape, so both paths
 /// funnel through `apply(applicationContext:)`.
 ///
-/// ### IMPORTANT — this slice is watch-side only
-/// Sending this application context from `HermesMobile` (the iPhone side of the
-/// sync: calling `WCSession.default.updateApplicationContext(_:)` whenever the
-/// active `ServerAccount` or session list changes) is **not implemented yet**.
-/// That work belongs in the iPhone target and must be added separately; until
-/// then this manager only ever sees whatever a manual test harness or a future
-/// iOS change delivers, and the watch app falls back to `WatchCredentialStore`
-/// (its own last-synced Keychain snapshot) and direct server calls.
+/// ### The sending half
+/// `HermesMobile/Connectivity/PhoneConnectivityManager.swift` owns the iPhone
+/// side and pushes this context whenever the active server, the server list, or
+/// the custom headers change. Keep the two files' key names in sync.
+///
+/// When the phone has never been in range, the watch falls back to
+/// `WatchCredentialStore` (its own last-synced Keychain snapshot) and talks to
+/// the server directly.
 @MainActor
 @Observable
 final class WatchConnectivityManager {
@@ -165,6 +166,7 @@ final class WatchConnectivityManager {
         if let signedOut = context["signed_out"] as? Bool, signedOut {
             WatchServerContext.shared.clear()
             WatchCredentialStore.shared.clear()
+            Self.clearAuthCookies()
             recentSessions = []
             return
         }
@@ -187,6 +189,16 @@ final class WatchConnectivityManager {
                 displayName: WatchServerContext.shared.displayName,
                 headers: CustomHeaderStore.shared.snapshot()
             )
+
+            // The watch has no login UI: Hermes auth is a cookie the phone
+            // obtained from POST /api/auth/login, and the two devices have
+            // separate cookie jars. Re-inserting it into HTTPCookieStorage.shared
+            // authenticates both REST (APIClient.makeDefaultSession) and SSE
+            // (SSEClient's .default configuration) without any per-call plumbing.
+            if let rawCookies = context["auth_cookies"] as? [[String: Any]],
+               let serverURL = URL(string: persistedURLString) {
+                Self.applyAuthCookies(rawCookies, serverURL: serverURL)
+            }
         }
 
         if let sessionsData = context["sessions"] as? Data {
@@ -195,6 +207,51 @@ final class WatchConnectivityManager {
             } else {
                 logger.error("Failed to decode synced 'sessions' payload; keeping previous snapshot.")
             }
+        }
+    }
+
+    /// Rebuilds `HTTPCookie`s from the phone's plist-flattened payload and stores
+    /// them. Each entry is validated independently — a malformed cookie is
+    /// skipped rather than failing the whole sync (AGENTS.md rule 3).
+    private static func applyAuthCookies(_ entries: [[String: Any]], serverURL: URL) {
+        for entry in entries {
+            guard
+                let name = entry["name"] as? String, !name.isEmpty,
+                let value = entry["value"] as? String
+            else { continue }
+
+            var properties: [HTTPCookiePropertyKey: Any] = [
+                .name: name,
+                .value: value,
+                .path: (entry["path"] as? String) ?? "/"
+            ]
+            // A cookie needs either an explicit domain or an origin to anchor to.
+            if let domain = entry["domain"] as? String, !domain.isEmpty {
+                properties[.domain] = domain
+            } else {
+                properties[.originURL] = serverURL
+            }
+            if let isSecure = entry["secure"] as? Bool, isSecure {
+                properties[.secure] = "TRUE"
+            }
+            // Omitting .expires yields a session cookie, which is the right
+            // fallback: it lasts as long as the process rather than forever.
+            if let expires = entry["expires"] as? Double {
+                properties[.expires] = Date(timeIntervalSince1970: expires)
+            }
+
+            guard let cookie = HTTPCookie(properties: properties) else { continue }
+            HTTPCookieStorage.shared.setCookie(cookie)
+        }
+    }
+
+    /// Drops every cookie this process holds. Only called on an explicit
+    /// `signed_out` push — the watch talks to exactly one server at a time, so
+    /// there is no other server's jar to preserve here (unlike the phone's
+    /// per-server `AuthManager.clearSessionCookies(for:)`).
+    private static func clearAuthCookies() {
+        HTTPCookieStorage.shared.cookies?.forEach {
+            HTTPCookieStorage.shared.deleteCookie($0)
         }
     }
 }
