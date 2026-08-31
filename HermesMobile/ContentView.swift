@@ -32,9 +32,32 @@ struct ContentView: View {
                 // notification, since a relaunch means it finished while not active.
                 await reconcileOrphanedLiveActivities(notifiesOnCompletion: true)
             }
+            .task {
+                // Watch sync (WATCHOS_ARCHITECTURE_SPEC §4). Activating here rather
+                // than in the App initializer keeps it off the launch critical path,
+                // and the first sync seeds the context for a watch that launches
+                // before the phone ever changes state.
+                PhoneConnectivityManager.shared.activate()
+                PhoneConnectivityManager.shared.sync(from: authManager)
+            }
+            .onChange(of: authManager.state) {
+                // Covers login, logout and server switching — the state carries the
+                // active server, and a fresh login means a fresh auth cookie the
+                // watch needs before any of its requests will be accepted.
+                PhoneConnectivityManager.shared.sync(from: authManager)
+            }
+            .onChange(of: authManager.servers) {
+                // Renaming a server (or editing its custom headers, which are
+                // persisted alongside it) changes what the watch should display
+                // and send.
+                PhoneConnectivityManager.shared.sync(from: authManager)
+            }
             .onChange(of: scenePhase) {
                 guard scenePhase == .active else { return }
                 importPendingSharedDraftIfAvailable()
+                // Re-sync on foreground: the cookie may have been refreshed or
+                // expired while the app was suspended.
+                PhoneConnectivityManager.shared.sync(from: authManager)
                 // #248: the foreground pass stays silent — the in-session completion
                 // paths own notifications while the app is alive.
                 Task { await reconcileOrphanedLiveActivities(notifiesOnCompletion: false) }

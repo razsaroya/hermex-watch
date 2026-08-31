@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Must stay identical to HermesWatch/Resources/HermesWatch.entitlements.
+	     The watch app is the only writer of the HermesWatchStatusSnapshot and
+	     this extension is the only reader; if the two App Groups diverge,
+	     UserDefaults(suiteName:) returns nil in the widget and every
+	     complication falls back to its placeholder. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>$(APP_GROUP_IDENTIFIER)</string>
+	</array>
+</dict>
+</plist>

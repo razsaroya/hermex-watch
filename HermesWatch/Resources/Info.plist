@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Single-target watchOS app (watchOS 7+ layout). The old
+	     WatchKit-app + WatchKit-extension pair is deprecated; WKApplication=YES
+	     declares the modern single-bundle form. -->
+	<key>WKApplication</key>
+	<true/>
+
+	<!-- Hermex ships an iPhone app, so the watch app is a *companion*, not a
+	     watch-only app. Do NOT add WKWatchOnly. The value tracks
+	     APP_BUNDLE_IDENTIFIER from Config/Shared.xcconfig so the branch
+	     TestFlight build (APP_IDENTIFIER_SUFFIX = .branch) pairs with the branch
+	     phone app rather than the production one. -->
+	<key>WKCompanionAppBundleIdentifier</key>
+	<string>$(APP_BUNDLE_IDENTIFIER)</string>
+
+	<key>CFBundleDisplayName</key>
+	<string>$(APP_DISPLAY_NAME)</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+
+	<!-- Required before AVAudioSession will grant record permission. Without
+	     this key the first requestRecordPermission call terminates the app.
+	     WATCHOS_ARCHITECTURE_SPEC §3.1 (voice-first chat). -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Hermex uses the microphone so you can talk to your Hermes agent from your wrist.</string>
+
+	<!-- Read by KeychainStore(service:) so the watch app's Keychain items are
+	     namespaced to the watch bundle and never collide with the phone's.
+	     Mirrors the existing HermesKeychainService convention in
+	     HermesMobile/Auth/KeychainStore.swift. -->
+	<key>HermesKeychainService</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+	<!-- Read by HermesWatchStatusBridge so the complication extension and the
+	     watch app agree on one App Group even in the .branch build. -->
+	<key>HermesAppGroupIdentifier</key>
+	<string>$(APP_GROUP_IDENTIFIER)</string>
+
+	<!-- Read by HermesWatchStatusBridge.deepLinkScheme so the complication's
+	     .widgetURL and the app's URL type stay in sync even in the .branch
+	     build, where APP_URL_SCHEME_SUFFIX is "-branch". Mirrors the iPhone
+	     app's "HermesURLScheme" key (HermesMobile/LiveActivities/HermesDeepLink.swift). -->
+	<key>HermesWatchURLScheme</key>
+	<string>hermex-watch$(APP_URL_SCHEME_SUFFIX)</string>
+
+	<!-- Deep links from the complication (hermex-watch://voice, ://approvals). -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>hermex-watch$(APP_URL_SCHEME_SUFFIX)</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Mirrors HermesMobile/Resources/Info.plist's exception. A Tailscale
+	     tailnet addresses peers in the CGNAT range 100.64.0.0/10 and Serve is
+	     often left on plain HTTP, so without this every request the watch makes
+	     to such a server is blocked by App Transport Security before it leaves
+	     the device — surfacing as "The resource could not be loaded because the
+	     App Transport Security policy requires the use of a secure connection".
+	     The watch talks to the same servers as the phone, so the two exception
+	     lists must stay identical. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>100.64.0.0/10</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+
+	<!-- NOTE (deliberately absent): WKBackgroundModes.
+	     WATCHOS_ARCHITECTURE_SPEC §5 Phase 2 asks for WKExtendedRuntimeSession
+	     entitlements for "background voice sessions". watchOS only grants
+	     extended runtime sessions for a fixed set of session types
+	     (self-care, mindfulness, physical-therapy, alarm, workout); a
+	     general-purpose agent chat is none of them, and shipping a false
+	     session type is an App Review rejection. See HermesWatch/README.md
+	     "Known deviations" before adding anything here. -->
+</dict>
+</plist>

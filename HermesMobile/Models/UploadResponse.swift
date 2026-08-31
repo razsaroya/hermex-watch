@@ -149,3 +149,29 @@ extension PendingAttachment {
         return "\(draft)\n\n[Attached files: \(references.joined(separator: ", "))]"
     }
 }
+
+/// Generates collision-resistant `.m4a` names for recorded voice notes. The
+/// 8-char suffix mirrors the attachment coordinator's uniquing so two quick notes
+/// don't clash on upload, and the `.m4a` extension makes the inline player treat
+/// the clip as audio even when the server reports a generic MIME type.
+///
+/// Lives in `Models/` rather than next to `ComposerVoiceNoteRecorder.swift` in
+/// `Features/Chat/` because it is a shared attachment-naming *contract*, not
+/// composer-specific UI logic: both `HermesMobile` and `HermesWatch` compile
+/// `Models/*.swift` (see `HermesWatch/README.md` "Shared file manifest"), but
+/// `Features/` is iOS-only. The watch's voice-note recorder must produce the
+/// exact same `voice-note-<8hex>.m4a` filename shape as the iOS composer,
+/// because that shape — not the MIME type — is what the inline audio player
+/// keys off of to render a clip as a playable voice note instead of a generic
+/// file attachment.
+enum VoiceNoteFilename {
+    static func generate(uuid: UUID = UUID()) -> String {
+        let suffix = uuid.uuidString.prefix(8).lowercased()
+        return "voice-note-\(suffix).m4a"
+    }
+
+    static func isVoiceNote(_ filename: String) -> Bool {
+        let lower = filename.lowercased()
+        return lower.hasPrefix("voice-note-") && lower.hasSuffix(".m4a")
+    }
+}

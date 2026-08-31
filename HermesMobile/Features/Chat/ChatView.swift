@@ -306,6 +306,7 @@ struct ChatView: View {
     @State private var showProfileNewSessionConfirmation = false
     @State private var goalDraft = ""
     @State private var showsGoalSheet = false
+    @State private var showsLiveVoiceSheet = false
     @State private var activeGitSheet: ActiveGitSheet?
     @State private var turnDiffPresentation: TurnDiffPresentation?
     @State private var viewModel: ChatViewModel
@@ -635,6 +636,15 @@ struct ChatView: View {
 
                 ToolbarItem(placement: .topBarTrailing) {
                     ChatToolbarActionCluster {
+                        ChatToolbarActionSlot {
+                            Button {
+                                showsLiveVoiceSheet = true
+                            } label: {
+                                Label("Live Voice", systemImage: "phone.circle.fill")
+                            }
+                            .accessibilityLabel("Live Voice Call")
+                        }
+
                         if viewModel.hasActivatedGoalCommand {
                             ChatToolbarActionSlot {
                                 goalControlMenu
@@ -683,6 +693,9 @@ struct ChatView: View {
             .sheet(item: $transcriptMediaPreviewItem, content: transcriptMediaPreviewView)
             .sheet(item: $activeGitSheet, content: gitSheet)
             .sheet(item: $turnDiffPresentation, content: turnDiffSheet)
+            .sheet(isPresented: $showsLiveVoiceSheet) {
+                LiveVoiceChatView(session: session, server: server)
+            }
             .alert(item: $gitAlert, content: gitAlertPresentation)
             .sheet(isPresented: $showsGoalSheet) {
                 GoalSubmissionSheet(
